@@ -1,0 +1,17 @@
+package com.hibernate.gymapp.repository;
+
+import com.hibernate.gymapp.model.Training;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface TrainingRepository {
+
+    Optional<Training> save(Training training);
+
+    Optional<Training> findById(Long id);
+
+    List<Training> findAll();
+
+    void delete(Training training);
+}
