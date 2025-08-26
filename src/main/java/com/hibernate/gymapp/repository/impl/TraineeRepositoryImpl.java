@@ -18,19 +18,12 @@ public class TraineeRepositoryImpl implements TraineeRepository {
     }
 
     @Override
-    @Transactional
-    public Optional<Trainee> save(Trainee trainee) {
-        try {
-            if (trainee.getId() == null) {
-                entityManager.persist(trainee);
-            } else {
-                trainee = entityManager.merge(trainee);
-            }
-            return Optional.of(trainee);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Optional.empty();
+    public Trainee save(Trainee trainee) {
+        if (trainee.getId() == null) {
+            entityManager.persist(trainee);
+            return trainee;
         }
+        return entityManager.merge(trainee);
     }
 
     @Override
@@ -54,7 +47,6 @@ public class TraineeRepositoryImpl implements TraineeRepository {
     }
 
     @Override
-    @Transactional
     public void delete(Trainee trainee) {
         if (!entityManager.contains(trainee)) {
             trainee = entityManager.merge(trainee);

@@ -3,6 +3,7 @@ package com.hibernate.gymapp.repository.impl;
 import com.hibernate.gymapp.model.User;
 import com.hibernate.gymapp.repository.UserRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
@@ -18,19 +19,12 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    @Transactional
-    public Optional<User> save(User user) {
-        try {
-            if (user.getId() == null) {
-                entityManager.persist(user);
-            } else {
-                user = entityManager.merge(user);
-            }
-            return Optional.of(user);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Optional.empty();
+    public User save(User user) {
+        if (user.getId() == null) {
+            entityManager.persist(user);
+            return user;
         }
+        return entityManager.merge(user);
     }
 
     @Override
@@ -55,7 +49,6 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    @Transactional
     public void delete(User user) {
         if (!entityManager.contains(user)) {
             user = entityManager.merge(user);
@@ -63,3 +56,4 @@ public class UserRepositoryImpl implements UserRepository {
         entityManager.remove(user);
     }
 }
+

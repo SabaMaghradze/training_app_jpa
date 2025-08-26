@@ -18,19 +18,12 @@ public class TrainerRepositoryImpl implements TrainerRepository {
     }
 
     @Override
-    @Transactional
-    public Optional<Trainer> save(Trainer trainer) {
-        try {
-            if (trainer.getId() == null) {
-                entityManager.persist(trainer);
-            } else {
-                trainer = entityManager.merge(trainer);
-            }
-            return Optional.of(trainer);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Optional.empty();
+    public Trainer save(Trainer trainer) {
+        if (trainer.getId() == null) {
+            entityManager.persist(trainer);
+            return trainer;
         }
+        return entityManager.merge(trainer);
     }
 
     @Override
@@ -47,7 +40,7 @@ public class TrainerRepositoryImpl implements TrainerRepository {
     @Override
     public Optional<Trainer> findByUsername(String username) {
         TypedQuery<Trainer> query = entityManager.createQuery(
-                "SELECT t FROM Trainer t WHERE t.username = :username", Trainer.class
+                "SELECT t FROM Trainer t WHERE t.user.username = :username", Trainer.class
         );
 
         query.setParameter("username", username);
@@ -55,7 +48,6 @@ public class TrainerRepositoryImpl implements TrainerRepository {
     }
 
     @Override
-    @Transactional
     public void delete(Trainer trainer) {
         if (!entityManager.contains(trainer)) {
             trainer = entityManager.merge(trainer);

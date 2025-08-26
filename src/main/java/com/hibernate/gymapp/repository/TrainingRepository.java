@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface TrainingRepository {
 
-    Optional<Training> save(Training training);
+    Training save(Training training);
 
     Optional<Training> findById(Long id);
 
