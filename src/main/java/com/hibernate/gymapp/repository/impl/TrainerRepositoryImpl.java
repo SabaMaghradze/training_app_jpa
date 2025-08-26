@@ -4,7 +4,6 @@ import com.hibernate.gymapp.model.Trainer;
 import com.hibernate.gymapp.repository.TrainerRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Optional;

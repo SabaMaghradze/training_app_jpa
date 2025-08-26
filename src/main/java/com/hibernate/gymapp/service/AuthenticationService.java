@@ -1,15 +1,12 @@
 package com.hibernate.gymapp.service;
 
-
 import com.hibernate.gymapp.model.User;
 import com.hibernate.gymapp.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
-@Transactional
 public class AuthenticationService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
