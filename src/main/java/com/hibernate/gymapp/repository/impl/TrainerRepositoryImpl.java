@@ -53,4 +53,21 @@ public class TrainerRepositoryImpl implements TrainerRepository {
         }
         entityManager.remove(trainer);
     }
+
+    @Override
+    public List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername) {
+        if (traineeUsername == null || traineeUsername.isEmpty()) {
+            // decide: return all trainers, or empty. returning all is reasonable
+            TypedQuery<Trainer> all = entityManager.createQuery("SELECT t FROM Trainer t", Trainer.class);
+            return all.getResultList();
+        }
+
+        String jpql = "SELECT t FROM Trainer t WHERE NOT EXISTS (" +
+                " SELECT 1 FROM Trainee tr JOIN tr.trainers trn WHERE trn = t AND tr.user.username = :username" +
+                ")";
+
+        TypedQuery<Trainer> query = entityManager.createQuery(jpql, Trainer.class);
+        query.setParameter("username", traineeUsername);
+        return query.getResultList();
+    }
 }

@@ -8,6 +8,10 @@ import com.hibernate.gymapp.repository.TrainerRepository;
 import com.hibernate.gymapp.repository.TrainingRepository;
 import com.hibernate.gymapp.repository.UserRepository;
 import com.hibernate.gymapp.utils.CredentialsGenerator;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,63 +23,26 @@ public class TraineeService {
 
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
-    private final TraineeRepository traineeRepository;
-    private final UserRepository userRepository;
-    private final AuthenticationService authenticationService;
+    private final EntityManagerFactory factory;
     private final CredentialsGenerator credentialsGenerator;
-    private final TrainingRepository trainingRepository;
-    private final TrainerRepository trainerRepository;
 
-    public TraineeService(TraineeRepository traineeRepository, UserRepository userRepository,
-                          AuthenticationService authenticationService, CredentialsGenerator credentialsGenerator,
-                          TrainingRepository trainingRepository, TrainerRepository trainerRepository) {
-        this.traineeRepository = traineeRepository;
-        this.userRepository = userRepository;
-        this.authenticationService = authenticationService;
+    public TraineeService(EntityManagerFactory factory, CredentialsGenerator credentialsGenerator) {
+        this.factory = factory;
         this.credentialsGenerator = credentialsGenerator;
-        this.trainingRepository = trainingRepository;
-        this.trainerRepository = trainerRepository;
     }
 
-    @Transactional
     public Optional<Trainee> createTraineeProfile(String firstName, String lastName,
                                                   LocalDate dateOfBirth, String address) {
         logger.info("Creating trainee profile for: {} {}", firstName, lastName);
 
-        try {
-            if (firstName == null || firstName.trim().isEmpty() ||
-                    lastName == null || lastName.trim().isEmpty()) {
-                logger.warn("Validation failed: First name and last name are required");
-                return Optional.empty();
-            }
-
-            String username = credentialsGenerator.generateUsername(firstName, lastName, userRepository);
-            String password = credentialsGenerator.generatePassword();
-
-            User user = new User();
-            user.setFirstName(firstName.trim());
-            user.setLastName(lastName.trim());
-            user.setUsername(username);
-            user.setPassword(password);
-            user.setIsActive(true);
-
-            User savedUser = userRepository.save(user)
-                    .orElseThrow(() -> new RuntimeException("Failed to save trainee"));
-
-            Trainee trainee = new Trainee();
-            trainee.setDateOfBirth(dateOfBirth);
-            trainee.setAddress(address);
-            trainee.setUser(savedUser);
-
-            Trainee savedTrainee = traineeRepository.save(trainee)
-                    .orElseThrow(() -> new RuntimeException("Failed to save trainee"));
-
-            logger.info("Successfully created trainee profile for username: {}", username);
-            return Optional.of(savedTrainee);
-        } catch (Exception e) {
-            logger.error("Error creating trainee profile for {} {}", firstName, lastName, e);
-            throw new RuntimeException("Failed to create trainee profile", e);
+        if (firstName == null || firstName.trim().isEmpty() || lastName == null || lastName.trim().isEmpty()) {
+            logger.warn("Validation failed: First name and last name are required");
+            return Optional.empty();
         }
+
+        EntityManager entityManager = factory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
     }
 
     public Optional<Trainee> getTraineeProfileByUsername(String username, String password) {

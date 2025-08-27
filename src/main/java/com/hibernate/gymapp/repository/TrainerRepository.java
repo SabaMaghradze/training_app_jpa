@@ -16,4 +16,6 @@ public interface TrainerRepository {
     void delete(Trainer trainer);
 
     Optional<Trainer> findByUsername(String username);
+
+    List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername);
 }

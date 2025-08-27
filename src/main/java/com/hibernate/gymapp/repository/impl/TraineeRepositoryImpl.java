@@ -4,7 +4,6 @@ import com.hibernate.gymapp.model.Trainee;
 import com.hibernate.gymapp.repository.TraineeRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +33,7 @@ public class TraineeRepositoryImpl implements TraineeRepository {
     @Override
     public Optional<Trainee> findByUsername(String username) {
         TypedQuery<Trainee> query = entityManager.createQuery(
-                "SELECT tr FROM Trainee tr WHERE tr.user.userName = :username", Trainee.class
+                "SELECT tr FROM Trainee tr WHERE tr.user.username = :username", Trainee.class
         );
         query.setParameter("username", username);
         return query.getResultStream().findFirst();

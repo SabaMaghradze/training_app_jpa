@@ -3,9 +3,7 @@ package com.hibernate.gymapp.repository.impl;
 import com.hibernate.gymapp.model.User;
 import com.hibernate.gymapp.repository.UserRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Optional;
