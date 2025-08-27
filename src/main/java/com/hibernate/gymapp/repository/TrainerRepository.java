@@ -1,7 +1,9 @@
 package com.hibernate.gymapp.repository;
 
 import com.hibernate.gymapp.model.Trainer;
+import com.hibernate.gymapp.model.Training;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,4 +20,11 @@ public interface TrainerRepository {
     Optional<Trainer> findByUsername(String username);
 
     List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername);
+
+    List<Training> findByTrainerUsernameWithCriteria(String trainerUsername,
+                                                     LocalDate fromDate,
+                                                     LocalDate toDate,
+                                                     String traineeName,
+                                                     String trainingTypeName);
+
 }

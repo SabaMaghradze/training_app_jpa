@@ -1,17 +1,10 @@
 package com.hibernate.gymapp.service;
 
 import com.hibernate.gymapp.model.Trainee;
-import com.hibernate.gymapp.model.Trainer;
 import com.hibernate.gymapp.model.User;
 import com.hibernate.gymapp.repository.TraineeRepository;
-import com.hibernate.gymapp.repository.TrainerRepository;
-import com.hibernate.gymapp.repository.TrainingRepository;
 import com.hibernate.gymapp.repository.UserRepository;
 import com.hibernate.gymapp.utils.CredentialsGenerator;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,30 +12,61 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.util.Optional;
 
+@Transactional
 public class TraineeService {
 
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
 
-    private final EntityManagerFactory factory;
+    private final TraineeRepository traineeRepository;
+    private final UserRepository userRepository;
+    private final AuthenticationService authenticationService;
     private final CredentialsGenerator credentialsGenerator;
 
-    public TraineeService(EntityManagerFactory factory, CredentialsGenerator credentialsGenerator) {
-        this.factory = factory;
+    public TraineeService(TraineeRepository traineeRepository, UserRepository userRepository,
+                          AuthenticationService authenticationService, CredentialsGenerator credentialsGenerator) {
+        this.traineeRepository = traineeRepository;
+        this.userRepository = userRepository;
+        this.authenticationService = authenticationService;
         this.credentialsGenerator = credentialsGenerator;
     }
 
+    @Transactional
     public Optional<Trainee> createTraineeProfile(String firstName, String lastName,
                                                   LocalDate dateOfBirth, String address) {
         logger.info("Creating trainee profile for: {} {}", firstName, lastName);
 
-        if (firstName == null || firstName.trim().isEmpty() || lastName == null || lastName.trim().isEmpty()) {
-            logger.warn("Validation failed: First name and last name are required");
-            return Optional.empty();
+        try {
+            if (firstName == null || firstName.trim().isEmpty() ||
+                    lastName == null || lastName.trim().isEmpty()) {
+                logger.warn("Validation failed: First name and last name are required");
+                return Optional.empty();
+            }
+
+            String username = credentialsGenerator.generateUsername(firstName, lastName, userRepository);
+            String password = credentialsGenerator.generatePassword();
+
+            User user = new User();
+            user.setFirstName(firstName.trim());
+            user.setLastName(lastName.trim());
+            user.setUsername(username);
+            user.setPassword(password);
+            user.setIsActive(true);
+
+            User savedUser = userRepository.save(user);
+
+            Trainee trainee = new Trainee();
+            trainee.setDateOfBirth(dateOfBirth);
+            trainee.setAddress(address);
+            trainee.setUser(savedUser);
+
+            Trainee savedTrainee = traineeRepository.save(trainee);
+
+            logger.info("Successfully created trainee profile for username: {}", username);
+            return Optional.of(savedTrainee);
+        } catch (Exception e) {
+            logger.error("Error creating trainee profile for {} {}", firstName, lastName, e);
+            throw new RuntimeException("Failed to create trainee profile", e);
         }
-
-        EntityManager entityManager = factory.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
-
     }
 
     public Optional<Trainee> getTraineeProfileByUsername(String username, String password) {
@@ -56,6 +80,7 @@ public class TraineeService {
         return traineeRepository.findByUsername(username);
     }
 
+    @Transactional
     public boolean changeTraineePassword(String username, String oldPassword, String newPassword) {
         logger.info("Changing password for trainer username: {}", username);
 
@@ -101,7 +126,6 @@ public class TraineeService {
         logger.info("Updating trainer profile for username: {}", username);
 
         try {
-            // Authenticate first
             if (!authenticationService.authenticateTrainer(username, password)) {
                 logger.warn("Authentication failed for trainer username: {}", username);
                 return Optional.empty();
@@ -129,13 +153,8 @@ public class TraineeService {
                 user.setIsActive(isActive);
             }
 
-            if (newSpecialization != null && !newSpecialization.trim().isEmpty()) {
-                trainer.setSpecialization(newSpecialization);
-            }
-
             userRepository.save(user);
-            Trainer updatedTrainee = traineeRepository.save(trainee)
-                    .orElseThrow(() -> new RuntimeException("Failed to update trainer"));
+            Trainee updatedTrainee = traineeRepository.save(trainee);
 
             logger.info("Successfully updated trainer profile for username: {}", username);
             return Optional.of(updatedTrainee);
@@ -151,7 +170,6 @@ public class TraineeService {
         logger.info("{} trainer with username: {}", active ? "Activating" : "Deactivating", username);
 
         try {
-            // Authenticate first
             if (!authenticationService.authenticateTrainer(username, password)) {
                 logger.warn("Authentication failed for trainer username: {}", username);
                 return false;

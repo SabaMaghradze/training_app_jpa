@@ -1,6 +1,7 @@
 package com.hibernate.gymapp.service;
 
 import com.hibernate.gymapp.model.Trainer;
+import com.hibernate.gymapp.model.TrainingType;
 import com.hibernate.gymapp.model.User;
 import com.hibernate.gymapp.repository.TrainerRepository;
 import com.hibernate.gymapp.repository.UserRepository;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
-
+@Transactional
 public class TrainerService {
 
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
@@ -31,14 +32,14 @@ public class TrainerService {
 
     @Transactional
     public Optional<Trainer> createTrainerProfile(String firstName, String lastName,
-                                                  String specialization) {
+                                                  TrainingType specialization) {
 
         logger.info("Creating trainer profile for: {} {}", firstName, lastName);
 
         try {
             if (firstName == null || firstName.trim().isEmpty() ||
                     lastName == null || lastName.trim().isEmpty() ||
-                    specialization == null || specialization.trim().isEmpty()) {
+                    specialization == null) {
                 logger.warn("Validation failed: First name, last name, and specialization are required");
                 return Optional.empty();
             }
@@ -53,15 +54,13 @@ public class TrainerService {
             user.setPassword(password);
             user.setIsActive(true);
 
-            User savedUser = userRepository.save(user)
-                    .orElseThrow(() -> new RuntimeException("Failed to save user"));
+            User savedUser = userRepository.save(user);
 
             Trainer trainer = new Trainer();
             trainer.setSpecialization(specialization);
             trainer.setUser(savedUser);
 
-            Trainer savedTrainer = trainerRepository.save(trainer)
-                    .orElseThrow(() -> new RuntimeException("Failed to save trainer"));
+            Trainer savedTrainer = trainerRepository.save(trainer);
 
             logger.info("Successfully created trainer profile for username: {}", username);
             return Optional.of(savedTrainer);
@@ -85,6 +84,11 @@ public class TrainerService {
     @Transactional
     public boolean changeTrainerPassword(String username, String oldPassword, String newPassword) {
         logger.info("Changing password for trainer username: {}", username);
+
+        if (!authenticationService.authenticateTrainer(username, oldPassword)) {
+            logger.warn("Authentication failed for trainer username: {}", username);
+            return false;
+        }
 
         try {
             Optional<Trainer> trainerOpt = trainerRepository.findByUsername(username);
@@ -123,12 +127,10 @@ public class TrainerService {
     @Transactional
     public Optional<Trainer> updateTrainerProfile(String username, String password,
                                                   String newFirstName, String newLastName,
-                                                  String newSpecialization, Boolean isActive)
-    {
+                                                  TrainingType newSpecialization, Boolean isActive) {
         logger.info("Updating trainer profile for username: {}", username);
 
         try {
-            // Authenticate first
             if (!authenticationService.authenticateTrainer(username, password)) {
                 logger.warn("Authentication failed for trainer username: {}", username);
                 return Optional.empty();
@@ -156,13 +158,12 @@ public class TrainerService {
                 user.setIsActive(isActive);
             }
 
-            if (newSpecialization != null && !newSpecialization.trim().isEmpty()) {
+            if (newSpecialization != null) {
                 trainer.setSpecialization(newSpecialization);
             }
 
             userRepository.save(user);
-            Trainer updatedTrainer = trainerRepository.save(trainer)
-                    .orElseThrow(() -> new RuntimeException("Failed to update trainer"));
+            Trainer updatedTrainer = trainerRepository.save(trainer);
 
             logger.info("Successfully updated trainer profile for username: {}", username);
             return Optional.of(updatedTrainer);
@@ -178,7 +179,6 @@ public class TrainerService {
         logger.info("{} trainer with username: {}", active ? "Activating" : "Deactivating", username);
 
         try {
-            // Authenticate first
             if (!authenticationService.authenticateTrainer(username, password)) {
                 logger.warn("Authentication failed for trainer username: {}", username);
                 return false;
@@ -217,7 +217,6 @@ public class TrainerService {
         logger.info("Deleting trainer profile for username: {}", username);
 
         try {
-            // Authenticate first
             if (!authenticationService.authenticateTrainer(username, password)) {
                 logger.warn("Authentication failed for trainer username: {}", username);
                 return false;

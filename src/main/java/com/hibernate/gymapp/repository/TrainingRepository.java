@@ -16,17 +16,4 @@ public interface TrainingRepository {
 
     void delete(Training training);
 
-    List<Training> findByTraineeUsernameWithCriteria(String traineeUsername,
-                                                     LocalDate fromDate,
-                                                     LocalDate toDate,
-                                                     String trainerName,
-                                                     String trainingTypeName);
-
-    List<Training> findByTrainerUsernameWithCriteria(String trainerUsername,
-                                                     LocalDate fromDate,
-                                                     LocalDate toDate,
-                                                     String traineeName,
-                                                     String trainingTypeName);
-
-
 }
