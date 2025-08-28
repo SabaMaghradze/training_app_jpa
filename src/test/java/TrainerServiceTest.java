@@ -9,10 +9,12 @@ import com.hibernate.gymapp.repository.UserRepository;
 import com.hibernate.gymapp.service.AuthenticationService;
 import com.hibernate.gymapp.service.TrainerService;
 import com.hibernate.gymapp.utils.CredentialsGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -47,34 +49,33 @@ public class TrainerServiceTest {
     @InjectMocks
     private TrainerService trainerService;
 
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+    }
 
     @Test
     void createTrainerProfile_Success() {
 
         String firstName = "John";
         String lastName = "Doe";
-        TrainingType specialization = new TrainingType();
+        TrainingType specialization = new TrainingType("random");
         String username = "johndoe";
         String password = "pass123";
 
-        when(credentialsGenerator.generateUsername(firstName, lastName, userRepository))
-                .thenReturn(username);
-        when(credentialsGenerator.generatePassword())
-                .thenReturn(password);
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setUsername("john.doe");
 
-        when(userRepository.save(any(User.class)))
-                .thenAnswer(invocation -> {
-                    User u = invocation.getArgument(0);
-                    u.setId(1L);
-                    return Optional.of(u);
-                });
+        Trainer mockTrainer = new Trainer();
+        mockTrainer.setId(1L);
+        mockTrainer.setUser(mockUser);
 
-        when(trainerRepository.save(any(Trainer.class)))
-                .thenAnswer(invocation -> {
-                    Trainer t = invocation.getArgument(0);
-                    t.setId(1L);
-                    return Optional.of(t);
-                });
+        when(credentialsGenerator.generateUsername(eq(firstName), eq(lastName), any(UserRepository.class)))
+                .thenReturn("john.doe");
+        when(credentialsGenerator.generatePassword()).thenReturn("password123");
+        when(userRepository.save(any(User.class))).thenReturn(mockUser);
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(mockTrainer);
 
         Optional<Trainer> result = trainerService.createTrainerProfile(firstName, lastName, specialization);
 
@@ -84,31 +85,38 @@ public class TrainerServiceTest {
     }
 
     @Test
-    void createTrainerProfile_InvalidName() {
+    void createTrainerProfile_InvalidInput() {
         Optional<Trainer> result = trainerService.createTrainerProfile("", "", null);
-        assertTrue(!result.isPresent());
+        assertFalse(result.isPresent());
+        verifyNoInteractions(userRepository, trainerRepository);
     }
 
     @Test
     void getTrainerProfileByUsername_Success() {
-        User user = new User();
-        user.setUsername("john");
-        Trainee trainee = new Trainee();
-        trainee.setUser(user);
 
-        when(authenticationService.authenticateTrainee("john", "pass")).thenReturn(true);
-        when(traineeRepository.findByUsername("john")).thenReturn(Optional.of(trainee));
+        String username = "trainer1";
+        String password = "pass";
+        Trainer trainer = new Trainer();
+
+        when(authenticationService.authenticateTrainer(username, password)).thenReturn(true);
+        when(trainerRepository.findByUsername(username)).thenReturn(Optional.of(trainer));
 
         Optional<Trainer> result = trainerService.getTrainerProfileByUsername("john", "pass");
+
         assertTrue(result.isPresent());
-        assertEquals(user, result.get().getUser());
+        verify(trainerRepository).findByUsername(username);
     }
 
     @Test
     void getTrainerProfileByUsername_FailedAuthentication() {
-        when(authenticationService.authenticateTrainee("john", "pass")).thenReturn(false);
-        Optional<Trainer> result = trainerService.getTrainerProfileByUsername("john", "pass");
-        assertTrue(!result.isPresent());
+        String username = "trainer1";
+        String password = "wrong";
+        when(authenticationService.authenticateTrainer(username, password)).thenReturn(false);
+
+        Optional<Trainer> result = trainerService.getTrainerProfileByUsername(username, password);
+
+        assertFalse(result.isPresent());
+        verifyNoInteractions(trainerRepository);
     }
 
     @Test
