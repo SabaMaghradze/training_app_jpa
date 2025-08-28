@@ -19,12 +19,9 @@ public interface TrainerRepository {
 
     Optional<Trainer> findByUsername(String username);
 
-    List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername);
-
-    List<Training> findByTrainerUsernameWithCriteria(String trainerUsername,
+    List<Training> findTrainingsByTrainerUsernameWithCriteria(String trainerUsername,
                                                      LocalDate fromDate,
                                                      LocalDate toDate,
                                                      String traineeName,
                                                      String trainingTypeName);
-
 }

@@ -1,6 +1,7 @@
 package com.hibernate.gymapp.repository.impl;
 
 import com.hibernate.gymapp.model.Trainee;
+import com.hibernate.gymapp.model.Trainer;
 import com.hibernate.gymapp.model.Training;
 import com.hibernate.gymapp.repository.TraineeRepository;
 import jakarta.persistence.EntityManager;
@@ -57,7 +58,23 @@ public class TraineeRepositoryImpl implements TraineeRepository {
     }
 
     @Override
-    public List<Training> findByTraineeUsernameWithCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingTypeName) {
+    public List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername) {
+        if (traineeUsername == null || traineeUsername.isEmpty()) {
+            TypedQuery<Trainer> all = entityManager.createQuery("SELECT t FROM Trainer t", Trainer.class);
+            return all.getResultList();
+        }
+
+        String jpql = "SELECT t FROM Trainer t WHERE NOT EXISTS (" +
+                " SELECT 1 FROM Trainee tr JOIN tr.trainers trn WHERE trn = t AND tr.user.username = :username" +
+                ")";
+
+        TypedQuery<Trainer> query = entityManager.createQuery(jpql, Trainer.class);
+        query.setParameter("username", traineeUsername);
+        return query.getResultList();
+    }
+
+    @Override
+    public List<Training> findTrainingsByTraineeUsernameWithCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingTypeName) {
         if (traineeUsername == null || traineeUsername.isEmpty()) {
             return Collections.emptyList();
         }

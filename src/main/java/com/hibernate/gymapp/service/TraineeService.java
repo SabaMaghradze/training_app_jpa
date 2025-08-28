@@ -1,18 +1,24 @@
 package com.hibernate.gymapp.service;
 
 import com.hibernate.gymapp.model.Trainee;
+import com.hibernate.gymapp.model.Trainer;
+import com.hibernate.gymapp.model.Training;
 import com.hibernate.gymapp.model.User;
 import com.hibernate.gymapp.repository.TraineeRepository;
+import com.hibernate.gymapp.repository.TrainingRepository;
 import com.hibernate.gymapp.repository.UserRepository;
 import com.hibernate.gymapp.utils.CredentialsGenerator;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-@Transactional
+
 public class TraineeService {
 
     private static final Logger logger = LoggerFactory.getLogger(TraineeService.class);
@@ -231,4 +237,77 @@ public class TraineeService {
             throw new RuntimeException("Failed to delete trainee profile", e);
         }
     }
+
+    public List<Trainer> findNonAssignedTrainers(String traineeUsername, String password) {
+        logger.info("Searching for all the trainers that are not assigned to this specific trainee: {}", traineeUsername);
+
+        try {
+            if (!authenticationService.authenticateTrainee(traineeUsername, password)) {
+                logger.warn("Authentication failed for trainee username: {}", traineeUsername);
+                return Collections.emptyList();
+            }
+
+            Optional<Trainee> traineeOpt = traineeRepository.findByUsername(traineeUsername);
+            if (!traineeOpt.isPresent()) {
+                logger.warn("Trainee not found for username: {}", traineeUsername);
+                return Collections.emptyList();
+            }
+
+            List<Trainer> trainers = traineeRepository.findTrainersNotAssignedToTrainee(traineeUsername);
+
+            if (trainers == null || trainers.isEmpty()) {
+                logger.warn("No trainers found: {}", traineeUsername);
+                Collections.emptyList();
+            }
+
+            logger.info("Successfully fetched all the trainers: {}", traineeUsername);
+
+            return trainers;
+
+        } catch (PersistenceException e) {
+            logger.error("Failed to fetch trainers: {}", traineeUsername, e);
+            throw new PersistenceException(e);
+        }
+    }
+
+    public List<Training> getTraineeTrainingsByCriteria(
+            String traineeUsername,
+            String password,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String trainerName,
+            String trainingTypeName
+    ) {
+        logger.info("Fetching trainings for trainee [{}] with criteria: fromDate={}, toDate={}, trainerName={}, trainingTypeName={}",
+                traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+
+        try {
+            if (!authenticationService.authenticateTrainee(traineeUsername, password)) {
+                logger.warn("Authentication failed for trainee: {}", traineeUsername);
+                return Collections.emptyList();
+            }
+
+            Optional<Trainee> traineeOpt = traineeRepository.findByUsername(traineeUsername);
+            if (!traineeOpt.isPresent()) {
+                logger.warn("Trainee not found for username: {}", traineeUsername);
+                return Collections.emptyList();
+            }
+
+            List<Training> trainings = traineeRepository.findTrainingsByTraineeUsernameWithCriteria(
+                    traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+
+            if (trainings == null || trainings.isEmpty()) {
+                logger.info("No trainings found for trainee [{}] with given criteria", traineeUsername);
+                return Collections.emptyList();
+            }
+
+            logger.info("Found {} trainings for trainee [{}]", trainings.size(), traineeUsername);
+            return trainings;
+
+        } catch (Exception e) {
+            logger.error("Error while fetching trainings for trainee [{}]", traineeUsername, e);
+            throw new RuntimeException("Failed to fetch trainings", e);
+        }
+    }
+
 }

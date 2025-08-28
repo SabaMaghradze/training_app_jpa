@@ -1,8 +1,6 @@
 package com.hibernate.gymapp.service;
 
-import com.hibernate.gymapp.model.Trainer;
-import com.hibernate.gymapp.model.TrainingType;
-import com.hibernate.gymapp.model.User;
+import com.hibernate.gymapp.model.*;
 import com.hibernate.gymapp.repository.TrainerRepository;
 import com.hibernate.gymapp.repository.UserRepository;
 import com.hibernate.gymapp.utils.CredentialsGenerator;
@@ -10,9 +8,12 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
-@Transactional
+
 public class TrainerService {
 
     private static final Logger logger = LoggerFactory.getLogger(TrainerService.class);
@@ -237,6 +238,46 @@ public class TrainerService {
         } catch (Exception e) {
             logger.error("Error deleting trainer profile for username: {}", username, e);
             throw new RuntimeException("Failed to delete trainer profile", e);
+        }
+    }
+
+    public List<Training> getTrainerTrainingsByCriteria(
+            String trainerUsername,
+            String password,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String traineeName,
+            String trainingTypeName
+    ) {
+        logger.info("Fetching trainings for trainee [{}] with criteria: fromDate={}, toDate={}, trainerName={}, trainingTypeName={}",
+                trainerUsername, fromDate, toDate, traineeName, trainingTypeName);
+
+        try {
+            if (!authenticationService.authenticateTrainee(trainerUsername, password)) {
+                logger.warn("Authentication failed for trainee: {}", trainerUsername);
+                return Collections.emptyList();
+            }
+
+            Optional<Trainer> trainerOpt = trainerRepository.findByUsername(trainerUsername);
+            if (!trainerOpt.isPresent()) {
+                logger.warn("Trainee not found for username: {}", trainerUsername);
+                return Collections.emptyList();
+            }
+
+            List<Training> trainings = trainerRepository.findTrainingsByTrainerUsernameWithCriteria(
+                    trainerUsername, fromDate, toDate, traineeName, trainingTypeName);
+
+            if (trainings == null || trainings.isEmpty()) {
+                logger.info("No trainings found for trainee [{}] with given criteria", trainerUsername);
+                return Collections.emptyList();
+            }
+
+            logger.info("Found {} trainings for trainee [{}]", trainings.size(), trainerUsername);
+            return trainings;
+
+        } catch (Exception e) {
+            logger.error("Error while fetching trainings for trainee [{}]", trainerUsername, e);
+            throw new RuntimeException("Failed to fetch trainings", e);
         }
     }
 }

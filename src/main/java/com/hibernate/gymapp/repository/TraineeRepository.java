@@ -1,6 +1,7 @@
 package com.hibernate.gymapp.repository;
 
 import com.hibernate.gymapp.model.Trainee;
+import com.hibernate.gymapp.model.Trainer;
 import com.hibernate.gymapp.model.Training;
 
 import java.time.LocalDate;
@@ -19,7 +20,9 @@ public interface TraineeRepository {
 
     void delete(Trainee trainee);
 
-    List<Training> findByTraineeUsernameWithCriteria(String traineeUsername,
+    List<Trainer> findTrainersNotAssignedToTrainee(String traineeUsername);
+
+    List<Training> findTrainingsByTraineeUsernameWithCriteria(String traineeUsername,
                                                      LocalDate fromDate,
                                                      LocalDate toDate,
                                                      String trainerName,
