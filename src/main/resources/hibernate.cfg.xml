@@ -15,11 +15,11 @@
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.format_sql">true</property>
 
-        <!-- List your annotated classes -->
-        <mapping class="com.example.model.User"/>
-        <mapping class="com.example.model.Trainee"/>
-        <mapping class="com.example.model.Trainer"/>
-        <mapping class="com.example.model.Training"/>
-        <mapping class="com.example.model.TrainingType"/>
+        <!-- Entities -->
+        <mapping class="com.hibernate.gymapp.model.User"/>
+        <mapping class="com.hibernate.gymapp.model.Trainee"/>
+        <mapping class="com.hibernate.gymapp.model.Trainer"/>
+        <mapping class="com.hibernate.gymapp.model.Training"/>
+        <mapping class="com.hibernate.gymapp.model.TrainingType"/>
     </session-factory>
 </hibernate-configuration>
