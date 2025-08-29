@@ -58,7 +58,11 @@ public class TrainerRepositoryImpl implements TrainerRepository {
     }
 
     @Override
-    public List<Training> findTrainingsByTrainerUsernameWithCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate, String traineeName, String trainingTypeName) {
+    public List<Training> findTrainingsByTrainerUsernameWithCriteria(String trainerUsername,
+                                                                     LocalDate fromDate,
+                                                                     LocalDate toDate,
+                                                                     String traineeName,
+                                                                     String trainingTypeName) {
         if (trainerUsername == null || trainerUsername.isEmpty()) {
             return Collections.emptyList();
         }
@@ -71,7 +75,7 @@ public class TrainerRepositoryImpl implements TrainerRepository {
                 .append("WHERE trun.username = :trainerUsername");
 
         if (fromDate != null) jpql.append(" AND tr.trainingDate >= :fromDate");
-        if (toDate != null)   jpql.append(" AND tr.trainingDate <= :toDate");
+        if (toDate != null) jpql.append(" AND tr.trainingDate <= :toDate");
         if (traineeName != null && !traineeName.isEmpty()) {
             jpql.append(" AND (LOWER(tu.firstName) LIKE :traineeName")
                     .append(" OR LOWER(tu.lastName) LIKE :traineeName")
@@ -85,7 +89,7 @@ public class TrainerRepositoryImpl implements TrainerRepository {
         query.setParameter("trainerUsername", trainerUsername);
 
         if (fromDate != null) query.setParameter("fromDate", fromDate);
-        if (toDate != null)   query.setParameter("toDate", toDate);
+        if (toDate != null) query.setParameter("toDate", toDate);
         if (traineeName != null && !traineeName.isEmpty()) {
             query.setParameter("traineeName", "%" + traineeName.trim().toLowerCase() + "%");
         }

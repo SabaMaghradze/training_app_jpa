@@ -60,22 +60,27 @@ public class TrainerServiceTest {
         String firstName = "John";
         String lastName = "Doe";
         TrainingType specialization = new TrainingType("random");
+
         String username = "johndoe";
         String password = "pass123";
 
         User mockUser = new User();
         mockUser.setId(1L);
-        mockUser.setUsername("john.doe");
+        mockUser.setUsername(username);
+        mockUser.setPassword(password);
 
         Trainer mockTrainer = new Trainer();
         mockTrainer.setId(1L);
         mockTrainer.setUser(mockUser);
 
         when(credentialsGenerator.generateUsername(eq(firstName), eq(lastName), any(UserRepository.class)))
-                .thenReturn("john.doe");
-        when(credentialsGenerator.generatePassword()).thenReturn("password123");
-        when(userRepository.save(any(User.class))).thenReturn(mockUser);
-        when(trainerRepository.save(any(Trainer.class))).thenReturn(mockTrainer);
+                .thenReturn(username);
+        when(credentialsGenerator.generatePassword()).thenReturn(password);
+
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(trainerRepository.save(any(Trainer.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Optional<Trainer> result = trainerService.createTrainerProfile(firstName, lastName, specialization);
 
@@ -230,6 +235,5 @@ public class TrainerServiceTest {
         assertTrue(deleted);
         verify(trainerRepository, times(1)).delete(trainer);
     }
-
 }
 

@@ -309,5 +309,4 @@ public class TraineeService {
             throw new RuntimeException("Failed to fetch trainings", e);
         }
     }
-
 }
