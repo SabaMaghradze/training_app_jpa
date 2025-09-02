@@ -23,7 +23,7 @@ public class AuthenticationService {
     }
 
     public boolean authenticateTrainer(String username, String password) {
-        logger.info("Authenticating trainee: {}", username);
+        logger.info("Authenticating trainer: {}", username);
         return authenticateUser(username, password);
     }
 
